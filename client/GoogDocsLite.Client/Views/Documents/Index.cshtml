@@ -3,91 +3,99 @@
 @{
     ViewData["Title"] = "Documents";
 
-    var ownedCount = Model.Documents.Count(x => x.IsOwner);
     var editableCount = Model.Documents.Count(x => x.AccessRole is "Owner" or "Editor");
     var readOnlyCount = Model.Documents.Count(x => x.AccessRole == "Viewer");
 }
 
-<section class="app-page-head">
+<section class="page-header">
     <div>
-        <h1 class="mb-1">Documents</h1>
-        <p>Organize resume drafts, cover letters, and portfolio notes in one collaborative workspace.</p>
+        <h1 class="page-title">Documents</h1>
+        <p class="page-subtitle">Create, organize, and open collaborative files from one focused workspace.</p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="page-actions">
         <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Invites">
             Invites
             @if (Model.IncomingInvitesCount > 0)
             {
-                <span class="badge text-bg-danger ms-1">@Model.IncomingInvitesCount</span>
+                <span class="badge bg-danger ms-1">@Model.IncomingInvitesCount</span>
             }
         </a>
         <button id="newDocumentButton" type="button" class="btn app-btn">New Document</button>
     </div>
 </section>
 
-<section class="app-grid-cards mb-3">
-    <article class="app-stat-card">
-        <small>Visible Docs</small>
-        <strong>@Model.Documents.Count</strong>
+<div class="mb-3">
+    @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+    {
+        <div class="app-alert app-alert-success">
+            <span>@Model.InfoMessage</span>
+        </div>
+    }
+
+    @if (Model.SyncedInvitesCount > 0)
+    {
+        <div class="app-alert app-alert-info">
+            <span>Synced @Model.SyncedInvitesCount pending invite(s).</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="app-alert app-alert-danger">
+            <span>@Model.ErrorMessage</span>
+        </div>
+    }
+</div>
+
+<section class="workspace-grid">
+    <article class="surface-card workspace-create">
+        <div class="surface-card-body">
+            <h5 class="mb-2">Create a new document</h5>
+            <p class="text-muted mb-3">Start from an empty page and share it with your collaborators.</p>
+
+            <form id="createDocumentForm" method="post" asp-controller="Documents" asp-action="Create" class="workspace-create-form">
+                <div>
+                    <input id="createDocumentTitle" asp-for="CreateForm.Title" class="form-control" placeholder="e.g. Product launch brief" />
+                    <span asp-validation-for="CreateForm.Title" class="text-danger d-block mt-2"></span>
+                </div>
+                <button type="submit" class="btn app-btn">Create</button>
+            </form>
+        </div>
     </article>
-    <article class="app-stat-card">
-        <small>Owned by You</small>
-        <strong>@ownedCount</strong>
-    </article>
-    <article class="app-stat-card">
-        <small>Can Edit</small>
-        <strong>@editableCount</strong>
-    </article>
-    <article class="app-stat-card">
-        <small>Read-only</small>
-        <strong>@readOnlyCount</strong>
+
+    <article class="surface-card workspace-stats">
+        <div class="surface-card-body">
+            <h5 class="mb-2">Workspace snapshot</h5>
+            <div class="stats-grid">
+                <article class="stat-card">
+                    <small>Total Docs</small>
+                    <strong>@Model.Documents.Count</strong>
+                </article>
+                <article class="stat-card">
+                    <small>Editable</small>
+                    <strong>@editableCount</strong>
+                </article>
+                <article class="stat-card">
+                    <small>Read Only</small>
+                    <strong>@readOnlyCount</strong>
+                </article>
+            </div>
+        </div>
     </article>
 </section>
 
-@if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
-{
-    <div class="app-alert app-alert-success">@Model.InfoMessage</div>
-}
-
-@if (Model.SyncedInvitesCount > 0)
-{
-    <div class="app-alert app-alert-info">Synced @Model.SyncedInvitesCount pending invite(s).</div>
-}
-
-@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-{
-    <div class="app-alert app-alert-danger">@Model.ErrorMessage</div>
-}
-
-<section class="app-panel mb-3">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-        <h5 class="mb-0">Quick Create</h5>
-        <span class="text-muted small">Tip: open command palette with <kbd>Ctrl/Cmd</kbd><kbd>K</kbd></span>
-    </div>
-
-    <form id="createDocumentForm" method="post" asp-controller="Documents" asp-action="Create" class="row g-2">
-        <div class="col-lg-9">
-            <input id="createDocumentTitle" asp-for="CreateForm.Title" class="form-control" placeholder="ex: Senior .NET Engineer Resume" />
-            <span asp-validation-for="CreateForm.Title" class="text-danger"></span>
-        </div>
-        <div class="col-lg-3 d-grid">
-            <button type="submit" class="btn app-btn">Create</button>
-        </div>
-    </form>
-</section>
-
-<nav class="app-tabs" aria-label="Document filters">
-    <a class="app-tab-link @(Model.ActiveView == "owned" ? "is-active" : string.Empty)" asp-controller="Documents" asp-action="Index" asp-route-view="owned">Owned by me</a>
-    <a class="app-tab-link @(Model.ActiveView == "shared" ? "is-active" : string.Empty)" asp-controller="Documents" asp-action="Index" asp-route-view="shared">Shared with me</a>
-    <a class="app-tab-link @(Model.ActiveView == "all" ? "is-active" : string.Empty)" asp-controller="Documents" asp-action="Index" asp-route-view="all">All</a>
+<nav class="filter-tabs" aria-label="Document filters">
+    <a class="filter-tab @(Model.ActiveView == "owned" ? "is-active" : string.Empty)" asp-controller="Documents" asp-action="Index" asp-route-view="owned">Owned by me</a>
+    <a class="filter-tab @(Model.ActiveView == "shared" ? "is-active" : string.Empty)" asp-controller="Documents" asp-action="Index" asp-route-view="shared">Shared with me</a>
+    <a class="filter-tab @(Model.ActiveView == "all" ? "is-active" : string.Empty)" asp-controller="Documents" asp-action="Index" asp-route-view="all">All Documents</a>
 </nav>
 
 @if (Model.Documents.Count == 0)
 {
     <div class="empty-state">
-        <h5 class="mb-1">No documents in this tab yet</h5>
-        <p class="mb-2">Create your first draft and start writing.</p>
-        <button type="button" class="btn app-btn" id="emptyNewDocumentButton">Create Now</button>
+        <h5 class="mb-1">No documents in this view</h5>
+        <p class="mb-3">Create your first document to get started.</p>
+        <button id="emptyNewDocumentButton" type="button" class="btn app-btn">Create Document</button>
     </div>
 }
 else
@@ -102,35 +110,26 @@ else
                     : "role-viewer";
 
             <article class="doc-card">
-                <div>
+                <div class="d-flex justify-content-between align-items-start gap-2">
                     <h5>@doc.Title</h5>
-                    <p class="doc-card-meta mb-0">Updated @doc.UpdatedAt.ToLocalTime().ToString("g")</p>
+                    <span class="role-pill @roleClass">@doc.AccessRole</span>
                 </div>
 
-                <span class="role-pill @roleClass">@doc.AccessRole</span>
+                <p class="doc-card-meta mb-0">Last updated @doc.UpdatedAt.ToLocalTime().ToString("g")</p>
 
                 <div class="doc-card-actions">
-                    <a class="btn app-btn btn-sm" asp-controller="Documents" asp-action="Edit" asp-route-id="@doc.Id">Open</a>
                     @if (doc.IsOwner)
                     {
-                        <form method="post" asp-controller="Documents" asp-action="Delete" asp-route-id="@doc.Id">
-                            <button type="submit" class="btn app-btn app-btn-outline btn-sm">Delete</button>
+                        <form method="post" asp-controller="Documents" asp-action="Delete" asp-route-id="@doc.Id" class="m-0">
+                            <button type="submit" class="btn app-btn app-btn-outline app-btn-danger btn-sm">Delete</button>
                         </form>
                     }
+                    <a class="btn app-btn btn-sm" asp-controller="Documents" asp-action="Edit" asp-route-id="@doc.Id">Open Editor</a>
                 </div>
             </article>
         }
     </section>
 }
-
-<section class="app-panel mt-3">
-    <h6 class="mb-2">Keyboard Walkthrough</h6>
-    <ul class="mb-0">
-        <li><kbd>Ctrl/Cmd</kbd><kbd>K</kbd> open command palette</li>
-        <li><kbd>Ctrl/Cmd</kbd><kbd>/</kbd> highlight shortcut panel</li>
-        <li>Use palette command <strong>Create New Document</strong> for quick focus</li>
-    </ul>
-</section>
 
 @section Scripts {
     @{
@@ -158,8 +157,6 @@ else
             newButtons.forEach((button) => {
                 button.addEventListener("click", focusCreateInput);
             });
-
-            document.addEventListener("cmdk:new-document", focusCreateInput);
 
             const query = new URLSearchParams(window.location.search);
             if (query.get("new") === "1") {

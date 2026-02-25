@@ -1,0 +1,69 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Log in";
+}
+
+<div class="auth-page">
+    <section class="auth-shell">
+        <div class="auth-card">
+            <h1>Welcome back</h1>
+            <p>Sign in to continue editing and collaborating on your documents.</p>
+
+            <form id="account" method="post" class="auth-form">
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                <div>
+                    <label asp-for="Input.Email" class="form-label">Email</label>
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Input.Password" class="form-label">Password</label>
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" asp-for="Input.RememberMe" />
+                    <label class="form-check-label" asp-for="Input.RememberMe">@Html.DisplayNameFor(m => m.Input.RememberMe)</label>
+                </div>
+
+                <button id="login-submit" type="submit" class="btn app-btn w-100">Log in</button>
+
+                <div class="auth-links">
+                    <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
+                    <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create a new account</a>
+                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
+                </div>
+            </form>
+        </div>
+
+        <aside class="auth-side">
+            <div>
+                <h2>Secure access</h2>
+                <p>Use your account to manage documents, invites, and realtime collaboration.</p>
+            </div>
+
+            @if ((Model.ExternalLogins?.Count ?? 0) == 0)
+            {
+                <p>No external authentication providers are configured.</p>
+            }
+            else
+            {
+                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+                    <p class="mb-1">Sign in with:</p>
+                    @foreach (var provider in Model.ExternalLogins!)
+                    {
+                        <button type="submit" class="btn app-btn app-btn-outline" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                    }
+                </form>
+            }
+        </aside>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

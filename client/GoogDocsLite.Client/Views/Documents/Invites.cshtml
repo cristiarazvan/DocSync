@@ -1,50 +1,58 @@
 @model GoogDocsLite.Client.Models.Documents.InvitesIndexViewModel
 @{
-    ViewData["Title"] = "Incoming Invites";
+    ViewData["Title"] = "Invites";
 }
 
-<section class="app-page-head">
+<section class="page-header">
     <div>
-        <h1 class="mb-1">Incoming Invites</h1>
-        <p>Review collaboration invitations and decide what belongs in your workspace.</p>
+        <h1 class="page-title">Invites</h1>
+        <p class="page-subtitle">Review incoming collaboration requests and decide what enters your workspace.</p>
     </div>
-    <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Index">Back to Documents</a>
+    <div class="page-actions">
+        <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Index">Back to Documents</a>
+    </div>
 </section>
 
 @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
 {
-    <div class="app-alert app-alert-success">@Model.InfoMessage</div>
+    <div class="app-alert app-alert-success">
+        <span>@Model.InfoMessage</span>
+    </div>
 }
 
 @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
 {
-    <div class="app-alert app-alert-danger">@Model.ErrorMessage</div>
+    <div class="app-alert app-alert-danger">
+        <span>@Model.ErrorMessage</span>
+    </div>
 }
 
 @if (Model.Invites.Count == 0)
 {
     <div class="empty-state">
-        <h5 class="mb-1">Inbox is clean</h5>
-        <p class="mb-0">You currently have no pending invites.</p>
+        <h5 class="mb-1">Inbox is clear</h5>
+        <p class="mb-0">No pending invites right now.</p>
     </div>
 }
 else
 {
-    <section class="doc-grid">
+    <section class="invite-grid">
         @foreach (var invite in Model.Invites)
         {
-            <article class="doc-card">
-                <div>
+            var roleClass = invite.Role == "Editor" ? "role-editor" : "role-viewer";
+
+            <article class="invite-card">
+                <div class="d-flex justify-content-between gap-2 align-items-start">
                     <h5>@invite.DocumentTitle</h5>
-                    <p class="doc-card-meta mb-0">Sent by @invite.CreatedByUserId</p>
+                    <span class="role-pill @roleClass">@invite.Role</span>
                 </div>
 
-                <div class="d-flex flex-wrap gap-2">
-                    <span class="role-pill role-editor">@invite.Role</span>
-                    <span class="role-pill role-viewer">Expires @invite.ExpiresAtUtc.ToLocalTime().ToString("g")</span>
+                <div class="invite-meta">
+                    <div>From: @invite.CreatedByUserId</div>
+                    <div>Expires: @invite.ExpiresAtUtc.ToLocalTime().ToString("g")</div>
                 </div>
 
-                <div class="doc-card-actions">
+                <div class="doc-card-actions justify-content-start">
                     <form method="post" asp-controller="Documents" asp-action="AcceptInvite" asp-route-inviteId="@invite.InviteId">
                         <button type="submit" class="btn app-btn btn-sm">Accept</button>
                     </form>

@@ -1,56 +1,95 @@
 @model GoogDocsLite.Client.Models.Home.HomeIndexViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Home";
+    var isSignedIn = User.Identity?.IsAuthenticated ?? false;
 }
 
-<section class="app-page-head">
-    <div>
-        <h1 class="mb-1">Dashboard</h1>
-        <p>Modern writing workspace inspired by Google Docs, tailored for resume-quality collaboration demos.</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a class="btn app-btn" asp-controller="Documents" asp-action="Index">Open Documents</a>
-        <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Invites">Review Invites</a>
-    </div>
-</section>
+@if (!isSignedIn)
+{
+    <section class="landing-hero">
+        <div class="landing-grid">
+            <div class="landing-copy">
+                <h1>Write, collaborate, and ship polished documents faster.</h1>
+                <p>
+                    GoogDocs Lite is a realtime writing workspace built for clear drafting, sharing, and iteration.
+                    Start with a clean canvas, invite collaborators, and keep every revision in sync.
+                </p>
+                <div class="landing-cta">
+                    <a class="btn app-btn" asp-area="Identity" asp-page="/Account/Register">Create Account</a>
+                    <a class="btn app-btn app-btn-outline" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
+                </div>
+            </div>
 
-<section class="app-grid-cards mb-3">
-    <article class="app-stat-card">
-        <small>Realtime Engine</small>
-        <strong>Live</strong>
+            <div class="surface-stack">
+                <article class="feature-card">
+                    <small>Realtime Engine</small>
+                    <strong>Live editing</strong>
+                </article>
+                <article class="feature-card">
+                    <small>Sharing Model</small>
+                    <strong>Owner / Editor / Viewer</strong>
+                </article>
+                <article class="feature-card">
+                    <small>Editor Core</small>
+                    <strong>Quill + SignalR</strong>
+                </article>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <section class="landing-hero">
+        <div class="page-header mb-0">
+            <div>
+                <h1 class="page-title">Welcome back</h1>
+                <p class="page-subtitle">Open your workspace, continue recent drafts, or review pending collaboration invites.</p>
+            </div>
+            <div class="page-actions">
+                <a class="btn app-btn" asp-controller="Documents" asp-action="Index">Open Documents</a>
+                <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Invites">Review Invites</a>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="home-feature-grid mb-3">
+    <article class="feature-card">
+        <small>Platform</small>
+        <strong>GoogDocs Lite MVC</strong>
     </article>
-    <article class="app-stat-card">
+    <article class="feature-card">
         <small>Collaboration</small>
-        <strong>SignalR</strong>
+        <strong>SignalR Presence</strong>
     </article>
-    <article class="app-stat-card">
-        <small>Editor</small>
-        <strong>Quill</strong>
-    </article>
-    <article class="app-stat-card">
-        <small>Backend API</small>
+    <article class="feature-card">
+        <small>Document Sync</small>
         <strong>@(Model.ServerStatus ?? "Unknown")</strong>
     </article>
 </section>
 
-<section class="app-panel">
-    <h5 class="mb-2">Server Health</h5>
+<section class="surface-card status-card">
+    <div class="surface-card-body">
+        <h5 class="mb-3">System Health</h5>
 
-    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-    {
-        <div class="app-alert app-alert-danger mb-0">@Model.ErrorMessage</div>
-    }
-    else
-    {
-        <div class="d-flex flex-wrap gap-3">
-            <div>
-                <small class="text-muted d-block">Status</small>
-                <strong>@Model.ServerStatus</strong>
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+        {
+            <div class="app-alert app-alert-danger mb-0">
+                <span>@Model.ErrorMessage</span>
             </div>
-            <div>
-                <small class="text-muted d-block">Server UTC Time</small>
-                <strong>@Model.ServerUtcTime?.ToString("u")</strong>
+        }
+        else
+        {
+            <div class="status-grid">
+                <div>
+                    <small class="text-muted d-block text-uppercase">Status</small>
+                    <strong>@(Model.ServerStatus ?? "Unknown")</strong>
+                </div>
+                <div>
+                    <small class="text-muted d-block text-uppercase">Server UTC Time</small>
+                    <strong>@Model.ServerUtcTime?.ToString("u")</strong>
+                </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </section>
