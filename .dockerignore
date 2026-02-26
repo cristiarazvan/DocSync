@@ -1,0 +1,10 @@
+.git
+.gitignore
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/.idea
+**/*.user
+**/*.suo
+docs-lite.db

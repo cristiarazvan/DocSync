@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "GoogDocsLite.Client" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - list [ref=e7]:
+          - listitem [ref=e8]:
+            - link "Register" [ref=e9] [cursor=pointer]:
+              - /url: /Identity/Account/Register
+          - listitem [ref=e10]:
+            - link "Login" [ref=e11] [cursor=pointer]:
+              - /url: /Identity/Account/Login
+  - main [ref=e13]:
+    - heading "Register" [level=1] [ref=e14]
+    - generic [ref=e15]:
+      - generic [ref=e17]:
+        - heading "Create a new account." [level=2] [ref=e18]
+        - separator [ref=e19]
+        - generic [ref=e20]:
+          - textbox "Email" [ref=e21]:
+            - /placeholder: name@example.com
+          - generic: Email
+        - generic [ref=e22]:
+          - textbox "Password" [ref=e23]:
+            - /placeholder: password
+          - generic: Password
+        - generic [ref=e24]:
+          - textbox "Confirm Password" [ref=e25]:
+            - /placeholder: password
+          - generic: Confirm Password
+        - button "Register" [ref=e26] [cursor=pointer]
+      - generic [ref=e28]:
+        - heading "Use another service to register." [level=3] [ref=e29]
+        - separator [ref=e30]
+        - paragraph [ref=e32]:
+          - text: There are no external authentication services configured. See this
+          - link "article about setting up this ASP.NET application to support logging in via external services" [ref=e33] [cursor=pointer]:
+            - /url: https://go.microsoft.com/fwlink/?LinkID=532715
+          - text: .
+  - contentinfo [ref=e34]:
+    - generic [ref=e35]:
+      - text: © 2026 - GoogDocsLite.Client -
+      - link "Privacy" [ref=e36] [cursor=pointer]:
+        - /url: /?page=%2FPrivacy

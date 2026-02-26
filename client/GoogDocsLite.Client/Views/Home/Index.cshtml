@@ -1,0 +1,56 @@
+@model GoogDocsLite.Client.Models.Home.HomeIndexViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="app-page-head">
+    <div>
+        <h1 class="mb-1">Dashboard</h1>
+        <p>Modern writing workspace inspired by Google Docs, tailored for resume-quality collaboration demos.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn app-btn" asp-controller="Documents" asp-action="Index">Open Documents</a>
+        <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Invites">Review Invites</a>
+    </div>
+</section>
+
+<section class="app-grid-cards mb-3">
+    <article class="app-stat-card">
+        <small>Realtime Engine</small>
+        <strong>Live</strong>
+    </article>
+    <article class="app-stat-card">
+        <small>Collaboration</small>
+        <strong>SignalR</strong>
+    </article>
+    <article class="app-stat-card">
+        <small>Editor</small>
+        <strong>Quill</strong>
+    </article>
+    <article class="app-stat-card">
+        <small>Backend API</small>
+        <strong>@(Model.ServerStatus ?? "Unknown")</strong>
+    </article>
+</section>
+
+<section class="app-panel">
+    <h5 class="mb-2">Server Health</h5>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="app-alert app-alert-danger mb-0">@Model.ErrorMessage</div>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-3">
+            <div>
+                <small class="text-muted d-block">Status</small>
+                <strong>@Model.ServerStatus</strong>
+            </div>
+            <div>
+                <small class="text-muted d-block">Server UTC Time</small>
+                <strong>@Model.ServerUtcTime?.ToString("u")</strong>
+            </div>
+        </div>
+    }
+</section>

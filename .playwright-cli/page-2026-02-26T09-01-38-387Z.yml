@@ -1,0 +1,90 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "GoogDocs Lite" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e6]:
+          - list [ref=e7]:
+            - listitem [ref=e8]:
+              - link "Home" [ref=e9] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e10]:
+              - link "Documents" [ref=e11] [cursor=pointer]:
+                - /url: /docs
+            - listitem [ref=e12]:
+              - link "Invites" [ref=e13] [cursor=pointer]:
+                - /url: /docs/invites
+          - list [ref=e14]:
+            - listitem [ref=e15]:
+              - generic [ref=e16]: Salut, owner.demo@googdocs.local
+            - listitem [ref=e17]:
+              - button "Logout" [ref=e19] [cursor=pointer]
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - heading "Editor" [level=1] [ref=e24]
+        - text: "Access role: Owner"
+      - link "Back" [ref=e25] [cursor=pointer]:
+        - /url: /docs
+    - generic [ref=e27]:
+      - heading "Live Collaboration" [level=6] [ref=e28]
+      - generic [ref=e29]:
+        - generic [ref=e30]: No active editor lock. Request edit access to start editing.
+        - button "Request edit access" [ref=e31] [cursor=pointer]
+      - generic [ref=e32]:
+        - generic [ref=e33]: "Users present:"
+        - list [ref=e119]:
+          - listitem [ref=e120]: owner.demo@googdocs.local (you)
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]: Title
+        - textbox "Title" [ref=e37]: Private Resume Draft
+      - generic [ref=e38]:
+        - generic [ref=e39]: Content (Rich Text)
+        - generic [ref=e40]:
+          - generic [ref=e42]:
+            - button "Normal" [ref=e43] [cursor=pointer]:
+              - text: Normal
+              - img [ref=e44]
+            - text: Heading 1 Heading 2 Normal
+          - generic [ref=e47]:
+            - button [ref=e48] [cursor=pointer]:
+              - img [ref=e49]
+            - button [ref=e52] [cursor=pointer]:
+              - img [ref=e53]
+            - button [ref=e55] [cursor=pointer]:
+              - img [ref=e56]
+            - button [ref=e59] [cursor=pointer]:
+              - img [ref=e60]
+          - generic [ref=e64]:
+            - button [ref=e65] [cursor=pointer]:
+              - img [ref=e66]
+            - button [ref=e70] [cursor=pointer]:
+              - img [ref=e71]
+          - button [ref=e74] [cursor=pointer]:
+            - img [ref=e75]
+          - generic [ref=e76]:
+            - button [ref=e77] [cursor=pointer]:
+              - img [ref=e78]
+            - button [ref=e83] [cursor=pointer]:
+              - img [ref=e84]
+          - button [ref=e89] [cursor=pointer]:
+            - img [ref=e90]
+          - button [ref=e95] [cursor=pointer]:
+            - img [ref=e96]
+        - paragraph [ref=e103]: Acesta este un document privat al owner-ului demo.
+      - generic [ref=e104]:
+        - button "Save" [disabled]
+    - generic [ref=e105]: "Last saved: 26.02.2026 10:59"
+    - generic [ref=e107]:
+      - heading "Share Management" [level=5] [ref=e108]
+      - generic [ref=e109]:
+        - textbox "Invitee email" [ref=e111]
+        - combobox [ref=e113]:
+          - option "Viewer" [selected]
+          - option "Editor"
+        - button "Send invite" [ref=e115] [cursor=pointer]
+      - generic [ref=e116]: No share entries yet.
+  - contentinfo [ref=e117]:
+    - generic [ref=e118]: © 2026 - GoogDocs Lite MVC

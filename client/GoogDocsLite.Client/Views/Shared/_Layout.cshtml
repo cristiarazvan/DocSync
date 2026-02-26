@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="paper">
+@{
+    var currentPath = Context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
+
+    string NavClass(string target)
+    {
+        if (target == "/")
+        {
+            return currentPath == "/" ? "is-active" : string.Empty;
+        }
+
+        return currentPath.StartsWith(target) ? "is-active" : string.Empty;
+    }
+}
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - GoogDocs Lite</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/GoogDocsLite.Client.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="app-body">
+    <div class="app-bg-glow app-bg-glow-left"></div>
+    <div class="app-bg-glow app-bg-glow-right"></div>
+
+    <div class="app-shell">
+        <aside class="app-sidebar">
+            <a class="app-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="app-brand-badge">G</span>
+                <span>
+                    <strong>GoogDocs Lite</strong>
+                    <small>Resume Studio</small>
+                </span>
+            </a>
+
+            <nav class="app-nav">
+                <a class="app-nav-item @NavClass("/")" asp-area="" asp-controller="Home" asp-action="Index">
+                    <span>Dashboard</span>
+                </a>
+                <a class="app-nav-item @NavClass("/docs")" asp-area="" asp-controller="Documents" asp-action="Index">
+                    <span>Documents</span>
+                </a>
+                <a class="app-nav-item @NavClass("/docs/invites")" asp-area="" asp-controller="Documents" asp-action="Invites">
+                    <span>Invites</span>
+                </a>
+            </nav>
+
+            <section class="app-shortcuts-panel">
+                <h6>Keyboard</h6>
+                <ul>
+                    <li><kbd>Ctrl/Cmd</kbd><kbd>K</kbd> Command palette</li>
+                    <li><kbd>Ctrl/Cmd</kbd><kbd>/</kbd> Toggle shortcuts</li>
+                </ul>
+            </section>
+        </aside>
+
+        <div class="app-main">
+            <header class="app-topbar">
+                <div class="app-topbar-left">
+                    <button id="commandPaletteButton" type="button" class="app-ghost-button" aria-label="Open command palette">
+                        <span>Command</span>
+                        <kbd>Ctrl/Cmd + K</kbd>
+                    </button>
+                    <button id="shortcutToggleButton" type="button" class="app-ghost-button" aria-label="Toggle shortcuts">
+                        <span>Shortcuts</span>
+                        <kbd>Ctrl/Cmd + /</kbd>
+                    </button>
+                </div>
+
+                <div class="app-topbar-right">
+                    <label class="theme-switcher-label" for="themeSelector">Theme</label>
+                    <select id="themeSelector" class="theme-switcher" aria-label="Theme selector">
+                        <option value="paper">Paper</option>
+                        <option value="sepia">Sepia</option>
+                        <option value="slate">Slate</option>
+                    </select>
+                    <partial name="_LoginPartial" />
+                </div>
+            </header>
+
+            <main role="main" class="app-content">
+                @RenderBody()
+            </main>
+
+            <footer class="app-footer">
+                <span>GoogDocs Lite MVC</span>
+                <span>Built for portfolio-ready collaborative editing.</span>
+            </footer>
+        </div>
+    </div>
+
+    <div id="commandPalette" class="cmdk d-none" aria-hidden="true">
+        <div class="cmdk-backdrop" data-cmdk-close="true"></div>
+        <section class="cmdk-panel" role="dialog" aria-modal="true" aria-labelledby="cmdkTitle">
+            <header>
+                <h2 id="cmdkTitle">Command Palette</h2>
+                <button type="button" class="cmdk-close" data-cmdk-close="true" aria-label="Close">Esc</button>
+            </header>
+            <input id="cmdkInput" type="text" class="cmdk-input" placeholder="Type a command..." autocomplete="off" />
+            <ul id="cmdkList" class="cmdk-list" role="listbox">
+                <li class="cmdk-item" data-cmdk-action="go-home" tabindex="0">Go to Dashboard</li>
+                <li class="cmdk-item" data-cmdk-action="go-docs" tabindex="0">Open Documents</li>
+                <li class="cmdk-item" data-cmdk-action="go-invites" tabindex="0">Open Invites</li>
+                <li class="cmdk-item" data-cmdk-action="new-document" tabindex="0">Create New Document</li>
+                <li class="cmdk-item" data-cmdk-action="toggle-theme" tabindex="0">Toggle Theme</li>
+            </ul>
+            <small>Press Enter to run the selected command.</small>
+        </section>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+.DS_Store
+server/GoogDocsLite.Server/docs-lite.db
+client/GoogDocsLite.Client/identity.db

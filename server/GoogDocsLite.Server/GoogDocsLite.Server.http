@@ -1,0 +1,6 @@
+@GoogDocsLite.Server_HostAddress = http://localhost:5175
+
+GET {{GoogDocsLite.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

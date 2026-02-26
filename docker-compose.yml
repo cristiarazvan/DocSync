@@ -1,0 +1,33 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/GoogDocsLite.Server/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Data Source=/app/data/docs-lite.db
+      InternalApiKey: stage-dev-internal-api-key
+    ports:
+      - "5175:8080"
+    volumes:
+      - server-data:/app/data
+
+  client:
+    build:
+      context: .
+      dockerfile: client/GoogDocsLite.Client/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ApiBaseUrl: http://server:8080
+      ConnectionStrings__IdentityConnection: Data Source=/app/data/identity.db
+      InternalApiKey: stage-dev-internal-api-key
+    depends_on:
+      - server
+    ports:
+      - "5169:8080"
+    volumes:
+      - client-data:/app/data
+
+volumes:
+  server-data:
+  client-data:

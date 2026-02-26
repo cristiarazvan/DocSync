@@ -1,0 +1,960 @@
+@model GoogDocsLite.Client.Models.Documents.DocumentEditorViewModel
+@{
+    ViewData["Title"] = "Document Editor";
+}
+
+@if (Model.NotFound)
+{
+    <div class="app-alert app-alert-danger">Document not found.</div>
+    <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Index">Back To Documents</a>
+}
+else
+{
+    <section class="app-page-head">
+        <div>
+            <h1 class="mb-1">Editor</h1>
+            <p>Realtime collaborative editing with revision-aware synchronization.</p>
+        </div>
+        <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Index">Back</a>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+    {
+        <div class="app-alert app-alert-success">@Model.SuccessMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+    {
+        <div class="app-alert app-alert-info">@Model.InfoMessage</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="app-alert app-alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <div class="editor-shell">
+        <section class="editor-main">
+            <form id="saveForm" method="post" asp-controller="Documents" asp-action="Save" class="editor-page">
+                <input asp-for="Form.Id" type="hidden" />
+                <input asp-for="Form.Content" type="hidden" />
+
+                <div class="mb-3">
+                    <label asp-for="Form.Title" class="form-label">Document Title</label>
+                    <input asp-for="Form.Title" class="editor-title-input" />
+                    <span asp-validation-for="Form.Title" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                    <button id="addCommentBubbleButton" type="button" class="btn app-btn app-btn-outline btn-sm">Add Inline Comment Bubble</button>
+                    <span class="ui-only-pill">Local UI comments (client-side only)</span>
+                </div>
+
+                <div class="editor-stage">
+                    <div id="quillEditor" class="rich-editor"></div>
+                    <div id="commentBubbleLayer" class="comment-bubble-layer"></div>
+                </div>
+
+                <div class="editor-controls">
+                    <button id="saveButton" type="submit" class="btn app-btn">Save</button>
+                    <span id="savingLabel" class="text-warning d-none">Saving...</span>
+                    <span id="autoSaveLabel" class="text-success d-none">Saved automatically</span>
+                    <span id="autoSaveErrorLabel" class="text-danger d-none"></span>
+                    <small id="lastSavedLabel" class="text-muted ms-auto">
+                        @if (Model.UpdatedAt is not null)
+                        {
+                            @:Last saved: @Model.UpdatedAt.Value.ToLocalTime().ToString("g")
+                        }
+                    </small>
+                </div>
+            </form>
+
+            <section class="app-panel mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Inline Comment Bubbles</h6>
+                    <span class="ui-only-pill">UI only</span>
+                </div>
+                <ul id="commentBubbleList" class="inline-comment-list">
+                    <li>No comment bubbles yet.</li>
+                </ul>
+            </section>
+
+            @if (Model.CanManageShares)
+            {
+                <section class="app-panel mt-3">
+                    <h5 class="mb-3">Share Management</h5>
+
+                    <form method="post" asp-controller="Documents" asp-action="CreateShare" asp-route-id="@Model.Form.Id" class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <input asp-for="ShareForm.InviteeEmail" class="form-control" placeholder="Invitee email" />
+                            <span asp-validation-for="ShareForm.InviteeEmail" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <select asp-for="ShareForm.Role" class="form-select">
+                                <option value="Viewer">Viewer</option>
+                                <option value="Editor">Editor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-grid">
+                            <button type="submit" class="btn app-btn">Send invite</button>
+                        </div>
+                    </form>
+
+                    @if (Model.Shares.Count == 0)
+                    {
+                        <div class="empty-state">No share entries yet.</div>
+                    }
+                    else
+                    {
+                        <div class="doc-grid">
+                            @foreach (var share in Model.Shares)
+                            {
+                                <article class="doc-card">
+                                    <div>
+                                        <h5 class="mb-1">@share.Subject</h5>
+                                        <p class="doc-card-meta mb-0">@share.ShareType | @share.Role | @share.Status</p>
+                                    </div>
+                                    <p class="doc-card-meta mb-0">Created: @share.CreatedAtUtc.ToLocalTime().ToString("g")</p>
+                                    @if (share.ExpiresAtUtc is not null)
+                                    {
+                                        <p class="doc-card-meta mb-0">Expires: @share.ExpiresAtUtc.Value.ToLocalTime().ToString("g")</p>
+                                    }
+                                    <form method="post" asp-controller="Documents" asp-action="DeleteShare" asp-route-id="@Model.Form.Id" asp-route-shareId="@share.Id">
+                                        <button type="submit" class="btn app-btn app-btn-outline btn-sm">Revoke</button>
+                                    </form>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            }
+        </section>
+
+        <aside class="editor-sidebar">
+            <section class="app-panel">
+                <h6 class="mb-2">Realtime Collaboration</h6>
+                <div class="editor-status-row mb-2">
+                    <span id="connectionStatusBadge" class="editor-badge text-bg-secondary">Connecting...</span>
+                    <span id="revisionBadge" class="editor-badge">Revision @Model.CurrentRevision</span>
+                    <span id="accessStatusText" class="editor-badge">@(Model.CanEditByRole ? "Can edit" : "Read-only")</span>
+                </div>
+                <small class="text-muted d-block mb-2">Users present</small>
+                <ul id="presenceList" class="presence-list-modern"></ul>
+            </section>
+
+            <section class="app-panel">
+                <h6 class="mb-2">Writing Stats</h6>
+                <ul class="stats-list">
+                    <li>
+                        <small>Words</small>
+                        <strong id="wordCountValue">0</strong>
+                    </li>
+                    <li>
+                        <small>Characters</small>
+                        <strong id="characterCountValue">0</strong>
+                    </li>
+                    <li>
+                        <small>Reading time</small>
+                        <strong id="readingTimeValue">0 min</strong>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="app-panel">
+                <h6 class="mb-2">Activity Timeline</h6>
+                <ul id="activityTimelineList" class="timeline-list">
+                    <li>
+                        <strong>Editor opened</strong>
+                        <small>Waiting for realtime events...</small>
+                    </li>
+                </ul>
+            </section>
+
+            <section class="app-panel">
+                <h6 class="mb-2">Editor Shortcuts</h6>
+                <ul class="mb-0">
+                    <li><kbd>Ctrl/Cmd</kbd><kbd>K</kbd> open command palette</li>
+                    <li><kbd>Ctrl/Cmd</kbd><kbd>/</kbd> toggle shortcuts highlight</li>
+                    <li>Autosave triggers every 2s when document is stable</li>
+                </ul>
+            </section>
+        </aside>
+    </div>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+}
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    @if (!Model.NotFound)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
+        <script>
+            const documentId = "@Model.Form.Id";
+            const canEditByRole = @Model.CanEditByRole.ToString().ToLowerInvariant();
+            const currentUserId = "@Model.CurrentUserId";
+            const currentUserDisplayName = "@Model.CurrentUserDisplayName";
+            const initialRevision = @Model.CurrentRevision;
+
+            const saveForm = document.getElementById("saveForm");
+            const saveButton = document.getElementById("saveButton");
+            const savingLabel = document.getElementById("savingLabel");
+            const autoSaveLabel = document.getElementById("autoSaveLabel");
+            const autoSaveErrorLabel = document.getElementById("autoSaveErrorLabel");
+            const titleInput = document.getElementById("Form_Title");
+            const contentInput = document.getElementById("Form_Content");
+            const antiForgeryInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            const presenceList = document.getElementById("presenceList");
+            const lastSavedLabel = document.getElementById("lastSavedLabel");
+            const revisionBadge = document.getElementById("revisionBadge");
+            const connectionStatusBadge = document.getElementById("connectionStatusBadge");
+            const accessStatusText = document.getElementById("accessStatusText");
+            const wordCountValue = document.getElementById("wordCountValue");
+            const characterCountValue = document.getElementById("characterCountValue");
+            const readingTimeValue = document.getElementById("readingTimeValue");
+            const activityTimelineList = document.getElementById("activityTimelineList");
+            const commentBubbleLayer = document.getElementById("commentBubbleLayer");
+            const commentBubbleList = document.getElementById("commentBubbleList");
+            const addCommentBubbleButton = document.getElementById("addCommentBubbleButton");
+
+            let isSavingInBackground = false;
+            let isDirty = false;
+            let isManualSubmit = false;
+            let isApplyingRemoteContent = false;
+            let currentRevision = initialRevision;
+            const pendingClientOps = new Map();
+            const knownOwnOps = new Set();
+            const queuedClientOps = [];
+            let inFlightClientOpId = null;
+
+            let commentBubbleCounter = 1;
+            const commentBubbles = [];
+
+            const quill = new Quill("#quillEditor", {
+                theme: "snow",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        [{ align: [] }],
+                        ["blockquote", "code-block"],
+                        ["link"],
+                        ["clean"]
+                    ]
+                }
+            });
+
+            quill.root.innerHTML = contentInput.value || "";
+
+            function syncEditorToHiddenField() {
+                contentInput.value = quill.root.innerHTML;
+            }
+
+            function setConnectionStatus(text, cssClass) {
+                if (!connectionStatusBadge) {
+                    return;
+                }
+
+                connectionStatusBadge.textContent = text;
+                connectionStatusBadge.className = cssClass;
+            }
+
+            function updateRevisionBadge() {
+                if (revisionBadge) {
+                    revisionBadge.textContent = `Revision ${currentRevision}`;
+                }
+            }
+
+            function setAutoSaved(text, isError) {
+                autoSaveLabel.classList.add("d-none");
+                autoSaveErrorLabel.classList.add("d-none");
+                autoSaveErrorLabel.textContent = "";
+
+                if (!text) {
+                    return;
+                }
+
+                if (isError) {
+                    autoSaveErrorLabel.textContent = text;
+                    autoSaveErrorLabel.classList.remove("d-none");
+                } else {
+                    autoSaveLabel.textContent = text;
+                    autoSaveLabel.classList.remove("d-none");
+                }
+            }
+
+            function applyEditingState() {
+                const editable = canEditByRole;
+
+                if (titleInput) {
+                    titleInput.readOnly = !editable;
+                }
+
+                quill.enable(editable);
+
+                if (saveButton) {
+                    saveButton.disabled = !editable;
+                }
+
+                if (addCommentBubbleButton) {
+                    addCommentBubbleButton.disabled = !editable;
+                }
+            }
+
+            function updateWritingStats() {
+                const plainText = (quill.getText() || "").trim();
+                const words = plainText.length > 0
+                    ? plainText.split(/\s+/).filter(Boolean).length
+                    : 0;
+                const chars = plainText.replace(/\s/g, "").length;
+                const readingMinutes = words === 0 ? 0 : Math.max(1, Math.ceil(words / 200));
+
+                if (wordCountValue) {
+                    wordCountValue.textContent = words.toString();
+                }
+
+                if (characterCountValue) {
+                    characterCountValue.textContent = chars.toString();
+                }
+
+                if (readingTimeValue) {
+                    readingTimeValue.textContent = `${readingMinutes} min`;
+                }
+            }
+
+            function logActivity(title, detail) {
+                if (!activityTimelineList) {
+                    return;
+                }
+
+                const item = document.createElement("li");
+                const now = new Date();
+                item.innerHTML = `<strong>${title}</strong><small>${detail} • ${now.toLocaleTimeString()}</small>`;
+                activityTimelineList.prepend(item);
+
+                const maxItems = 18;
+                while (activityTimelineList.children.length > maxItems) {
+                    activityTimelineList.removeChild(activityTimelineList.lastElementChild);
+                }
+            }
+
+            function generateClientOpId() {
+                if (window.crypto?.randomUUID) {
+                    return window.crypto.randomUUID();
+                }
+
+                return `op-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            }
+
+            function tryParseDelta(deltaJson) {
+                if (!deltaJson) {
+                    return null;
+                }
+
+                try {
+                    return JSON.parse(deltaJson);
+                } catch {
+                    return null;
+                }
+            }
+
+            function hasPendingRealtimeOperations() {
+                return inFlightClientOpId !== null || queuedClientOps.length > 0 || pendingClientOps.size > 0;
+            }
+
+            function removeQueuedOperation(clientOpId) {
+                const index = queuedClientOps.findIndex((op) => op.clientOpId === clientOpId);
+                if (index >= 0) {
+                    queuedClientOps.splice(index, 1);
+                }
+            }
+
+            async function sendNextQueuedOperation() {
+                if (!canEditByRole || !connection || connection.state !== "Connected") {
+                    return;
+                }
+
+                if (inFlightClientOpId || queuedClientOps.length === 0) {
+                    return;
+                }
+
+                const nextOperation = queuedClientOps[0];
+                if (!nextOperation) {
+                    return;
+                }
+
+                nextOperation.baseRevision = currentRevision;
+                inFlightClientOpId = nextOperation.clientOpId;
+
+                try {
+                    await connection.invoke(
+                        "SubmitOperation",
+                        documentId,
+                        nextOperation.baseRevision,
+                        nextOperation.clientOpId,
+                        nextOperation.deltaJson);
+                } catch (error) {
+                    inFlightClientOpId = null;
+                    setAutoSaved(error?.message || "Realtime sync failed. Retrying...", true);
+                    logActivity("Realtime retry", "Send failed, retry scheduled");
+                    setTimeout(() => { sendNextQueuedOperation(); }, 500);
+                }
+            }
+
+            function renderCommentBubbles() {
+                if (!commentBubbleLayer || !commentBubbleList) {
+                    return;
+                }
+
+                commentBubbleLayer.innerHTML = "";
+
+                if (commentBubbles.length === 0) {
+                    commentBubbleList.innerHTML = "<li>No comment bubbles yet.</li>";
+                    return;
+                }
+
+                const listMarkup = [];
+
+                commentBubbles.forEach((bubble) => {
+                    const bounds = quill.getBounds(bubble.index, 0);
+                    const marker = document.createElement("button");
+                    marker.type = "button";
+                    marker.className = "comment-bubble-marker";
+                    marker.style.top = `${Math.max(0, bounds.top)}px`;
+                    marker.textContent = bubble.number;
+                    marker.title = bubble.text;
+                    marker.dataset.bubbleId = bubble.id;
+                    commentBubbleLayer.appendChild(marker);
+
+                    listMarkup.push(`
+                        <li data-bubble-id="${bubble.id}">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div>
+                                    <strong>#${bubble.number}</strong>
+                                    <p class="mb-1">${bubble.text}</p>
+                                    <small>by ${bubble.author}</small>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <button type="button" data-action="focus">Go</button>
+                                    <button type="button" data-action="remove">X</button>
+                                </div>
+                            </div>
+                        </li>
+                    `);
+                });
+
+                commentBubbleList.innerHTML = listMarkup.join("");
+            }
+
+            function addCommentBubble() {
+                if (!canEditByRole) {
+                    setAutoSaved("Viewer mode cannot add comment bubbles.", true);
+                    return;
+                }
+
+                const selection = quill.getSelection(true) || { index: 0, length: 0 };
+                const text = window.prompt("Inline comment text:", "");
+                if (!text || !text.trim()) {
+                    return;
+                }
+
+                const bubble = {
+                    id: generateClientOpId(),
+                    number: commentBubbleCounter++,
+                    index: selection.index,
+                    text: text.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+                    author: currentUserDisplayName || currentUserId
+                };
+
+                commentBubbles.push(bubble);
+                renderCommentBubbles();
+                logActivity("Comment bubble", `Added note #${bubble.number}`);
+            }
+
+            function applyRemoteDelta(deltaJson, updatedAtUtc, updatedBy) {
+                const parsedDelta = tryParseDelta(deltaJson);
+                if (!parsedDelta) {
+                    return;
+                }
+
+                isApplyingRemoteContent = true;
+                quill.updateContents(parsedDelta, "api");
+                syncEditorToHiddenField();
+                isApplyingRemoteContent = false;
+                updateWritingStats();
+                renderCommentBubbles();
+
+                if (lastSavedLabel && updatedAtUtc) {
+                    const date = new Date(updatedAtUtc);
+                    lastSavedLabel.textContent = `Last saved: ${date.toLocaleString()} (${updatedBy || "remote"})`;
+                }
+            }
+
+            async function resyncRealtimeState(reason) {
+                try {
+                    const response = await fetch(`/docs/${documentId}/realtime/state`);
+                    if (!response.ok) {
+                        throw new Error("Failed to reload realtime state.");
+                    }
+
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.message || "Realtime state unavailable.");
+                    }
+
+                    const state = result.state || {};
+                    currentRevision = state.revision || 0;
+                    updateRevisionBadge();
+
+                    if (titleInput && typeof state.title === "string") {
+                        titleInput.value = state.title;
+                    }
+
+                    isApplyingRemoteContent = true;
+                    quill.root.innerHTML = state.contentHtml || "";
+                    syncEditorToHiddenField();
+                    isApplyingRemoteContent = false;
+
+                    pendingClientOps.clear();
+                    queuedClientOps.length = 0;
+                    inFlightClientOpId = null;
+                    updateWritingStats();
+                    renderCommentBubbles();
+                    logActivity("Realtime resync", reason || "State reloaded");
+                    setAutoSaved(reason || "Realtime state resynced.", false);
+                } catch (error) {
+                    setAutoSaved(error.message || "Failed to resync realtime state.", true);
+                    logActivity("Realtime error", "Resync failed");
+                }
+            }
+
+            async function requestMissingOperations() {
+                if (!connection || connection.state !== "Connected") {
+                    return;
+                }
+
+                try {
+                    await connection.invoke("RequestMissingOperations", documentId, currentRevision);
+                } catch {
+                    if (!canEditByRole || !hasPendingRealtimeOperations()) {
+                        await resyncRealtimeState("Replay request failed. Performing full resync.");
+                    }
+                }
+            }
+
+            async function saveHtmlSnapshot() {
+                if (isSavingInBackground || isManualSubmit || !isDirty || !canEditByRole) {
+                    return;
+                }
+
+                if (hasPendingRealtimeOperations()) {
+                    return;
+                }
+
+                isSavingInBackground = true;
+                setAutoSaved("Saving...", false);
+                syncEditorToHiddenField();
+
+                const payload = new URLSearchParams();
+                payload.append("revision", currentRevision.toString());
+                payload.append("contentHtml", contentInput.value || "");
+                payload.append("__RequestVerificationToken", antiForgeryInput ? antiForgeryInput.value : "");
+
+                try {
+                    const response = await fetch(`/docs/${documentId}/realtime/html-snapshot`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                        body: payload.toString()
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || "Snapshot failed.");
+                    }
+
+                    currentRevision = result.revision ?? currentRevision;
+                    updateRevisionBadge();
+                    isDirty = false;
+                    const savedAt = result.updatedAt ? new Date(result.updatedAt) : new Date();
+                    setAutoSaved(`Saved automatically at ${savedAt.toLocaleTimeString()}`, false);
+                    if (lastSavedLabel) {
+                        lastSavedLabel.textContent = `Last saved: ${savedAt.toLocaleString()}`;
+                    }
+                    logActivity("Autosave", "HTML snapshot persisted");
+                } catch (error) {
+                    const message = error?.message || "Autosave failed.";
+                    setAutoSaved(message, true);
+                    logActivity("Autosave error", message);
+
+                    if (/conflict|resync|revision/i.test(message) && !hasPendingRealtimeOperations()) {
+                        await resyncRealtimeState("Autosave revision conflict. State resynced.");
+                    }
+                } finally {
+                    isSavingInBackground = false;
+                }
+            }
+
+            if (typeof signalR === "undefined") {
+                setAutoSaved("Realtime library could not be loaded.", true);
+            }
+
+            const connection = typeof signalR !== "undefined"
+                ? new signalR.HubConnectionBuilder()
+                    .withUrl("/hubs/document-collab")
+                    .withAutomaticReconnect()
+                    .build()
+                : null;
+
+            connection?.on("PresenceChanged", (incomingDocumentId, users) => {
+                if ((incomingDocumentId || "").toString().toLowerCase() !== documentId.toLowerCase()) {
+                    return;
+                }
+
+                if (!presenceList) {
+                    return;
+                }
+
+                presenceList.innerHTML = "";
+                const normalizedUsers = Array.isArray(users) ? users : [];
+
+                if (normalizedUsers.length === 0) {
+                    const item = document.createElement("li");
+                    item.textContent = "No active users in this document.";
+                    presenceList.appendChild(item);
+                    return;
+                }
+
+                normalizedUsers.forEach((user) => {
+                    const userId = user.userId ?? user.UserId;
+                    const displayName = user.displayName ?? user.DisplayName ?? userId;
+
+                    const item = document.createElement("li");
+                    item.textContent = userId === currentUserId
+                        ? `${displayName} (you)`
+                        : displayName;
+
+                    presenceList.appendChild(item);
+                });
+            });
+
+            connection?.on("LiveContentPatched", (incomingDocumentId, serverSequence, contentHtml, contentDeltaJson, updatedBy, updatedAtUtc) => {
+                if ((incomingDocumentId || "").toString().toLowerCase() !== documentId.toLowerCase()) {
+                    return;
+                }
+
+                if (canEditByRole) {
+                    return;
+                }
+
+                currentRevision = serverSequence || currentRevision;
+                updateRevisionBadge();
+
+                isApplyingRemoteContent = true;
+                quill.root.innerHTML = contentHtml || "";
+                syncEditorToHiddenField();
+                isApplyingRemoteContent = false;
+                updateWritingStats();
+                renderCommentBubbles();
+
+                if (lastSavedLabel && updatedAtUtc) {
+                    const date = new Date(updatedAtUtc);
+                    lastSavedLabel.textContent = `Last saved: ${date.toLocaleString()} (${updatedBy || "remote"})`;
+                }
+            });
+
+            connection?.on("OperationAccepted", async (incomingDocumentId, revision, deltaJson, userId, createdAtUtc, clientOpId) => {
+                if ((incomingDocumentId || "").toString().toLowerCase() !== documentId.toLowerCase()) {
+                    return;
+                }
+
+                if (typeof revision !== "number") {
+                    return;
+                }
+
+                if (userId === currentUserId && clientOpId) {
+                    const trackedOperation = pendingClientOps.get(clientOpId);
+                    pendingClientOps.delete(clientOpId);
+                    knownOwnOps.add(clientOpId);
+                    removeQueuedOperation(clientOpId);
+
+                    if (inFlightClientOpId === clientOpId) {
+                        inFlightClientOpId = null;
+                    }
+
+                    if (trackedOperation && typeof trackedOperation.baseRevision === "number") {
+                        const expectedRevision = trackedOperation.baseRevision + 1;
+                        if (revision > expectedRevision) {
+                            await requestMissingOperations();
+                        }
+                    }
+
+                    currentRevision = Math.max(currentRevision, revision);
+                    updateRevisionBadge();
+                    await sendNextQueuedOperation();
+                    return;
+                }
+
+                if (revision > currentRevision + 1) {
+                    await requestMissingOperations();
+                    return;
+                }
+
+                if (revision <= currentRevision) {
+                    return;
+                }
+
+                applyRemoteDelta(deltaJson, createdAtUtc, userId);
+                currentRevision = revision;
+                updateRevisionBadge();
+                logActivity("Remote operation", `Update received from ${userId}`);
+            });
+
+            connection?.on("OperationsReplay", async (incomingDocumentId, operations) => {
+                if ((incomingDocumentId || "").toString().toLowerCase() !== documentId.toLowerCase()) {
+                    return;
+                }
+
+                const replay = Array.isArray(operations) ? operations : [];
+                replay.sort((a, b) => (a.revision ?? 0) - (b.revision ?? 0));
+
+                for (const op of replay) {
+                    const revision = op.revision ?? 0;
+                    if (revision <= currentRevision) {
+                        continue;
+                    }
+
+                    if (revision > currentRevision + 1) {
+                        await resyncRealtimeState("Revision gap detected during replay.");
+                        return;
+                    }
+
+                    const opUserId = op.userId ?? op.UserId;
+                    const opClientOpId = op.clientOpId ?? op.ClientOpId;
+                    if (opUserId === currentUserId && opClientOpId && (pendingClientOps.has(opClientOpId) || knownOwnOps.has(opClientOpId))) {
+                        pendingClientOps.delete(opClientOpId);
+                        knownOwnOps.add(opClientOpId);
+                        removeQueuedOperation(opClientOpId);
+                        if (inFlightClientOpId === opClientOpId) {
+                            inFlightClientOpId = null;
+                        }
+                    } else {
+                        applyRemoteDelta(op.deltaJson ?? op.DeltaJson, op.createdAtUtc ?? op.CreatedAtUtc, opUserId);
+                    }
+
+                    currentRevision = revision;
+                    updateRevisionBadge();
+                }
+
+                await sendNextQueuedOperation();
+            });
+
+            connection?.on("RealtimeStateResyncRequired", async (incomingDocumentId, reason) => {
+                if ((incomingDocumentId || "").toString().toLowerCase() !== documentId.toLowerCase()) {
+                    return;
+                }
+
+                await resyncRealtimeState(reason || "Server requested realtime resync.");
+            });
+
+            connection?.on("ContentUpdated", (incomingDocumentId, contentHtml, updatedAtUtc, updatedBy) => {
+                if ((incomingDocumentId || "").toString().toLowerCase() !== documentId.toLowerCase()) {
+                    return;
+                }
+
+                if (canEditByRole) {
+                    return;
+                }
+
+                isApplyingRemoteContent = true;
+                quill.root.innerHTML = contentHtml || "";
+                syncEditorToHiddenField();
+                isDirty = false;
+                isApplyingRemoteContent = false;
+                updateWritingStats();
+                renderCommentBubbles();
+            });
+
+            async function startRealtime() {
+                if (!connection) {
+                    return;
+                }
+
+                try {
+                    setConnectionStatus("Connecting...", "editor-badge text-bg-secondary");
+                    await connection.start();
+                    await connection.invoke("JoinDocument", documentId);
+                    setConnectionStatus("Connected", "editor-badge text-bg-success");
+                    logActivity("Realtime", "Connected to collaboration hub");
+                } catch (error) {
+                    setAutoSaved("Realtime connection failed.", true);
+                    setConnectionStatus("Offline", "editor-badge text-bg-danger");
+                    logActivity("Realtime", "Connection failed");
+                }
+            }
+
+            connection?.onreconnecting(() => {
+                setConnectionStatus("Reconnecting...", "editor-badge text-bg-warning");
+                logActivity("Realtime", "Reconnecting");
+            });
+
+            connection?.onreconnected(async () => {
+                setConnectionStatus("Connected", "editor-badge text-bg-success");
+                try {
+                    await connection.invoke("JoinDocument", documentId);
+                    await requestMissingOperations();
+                    await sendNextQueuedOperation();
+                    logActivity("Realtime", "Connection restored");
+                } catch {
+                    await resyncRealtimeState("Reconnected but replay failed.");
+                }
+            });
+
+            connection?.onclose(() => {
+                setConnectionStatus("Offline", "editor-badge text-bg-danger");
+                logActivity("Realtime", "Connection closed");
+            });
+
+            quill.on("text-change", async (delta, oldDelta, source) => {
+                if (isApplyingRemoteContent || source !== "user") {
+                    return;
+                }
+
+                isDirty = true;
+                setAutoSaved("", false);
+                syncEditorToHiddenField();
+                updateWritingStats();
+                renderCommentBubbles();
+
+                if (!canEditByRole || !connection || connection.state !== "Connected") {
+                    return;
+                }
+
+                const clientOpId = generateClientOpId();
+                const queuedOperation = {
+                    clientOpId,
+                    deltaJson: JSON.stringify(delta),
+                    baseRevision: null
+                };
+
+                pendingClientOps.set(clientOpId, queuedOperation);
+                queuedClientOps.push(queuedOperation);
+                await sendNextQueuedOperation();
+            });
+
+            if (titleInput) {
+                titleInput.addEventListener("input", () => {
+                    isDirty = true;
+                    setAutoSaved("", false);
+                });
+            }
+
+            if (saveForm && saveButton && savingLabel) {
+                saveForm.addEventListener("submit", (event) => {
+                    if (!canEditByRole) {
+                        event.preventDefault();
+                        setAutoSaved("You only have view access for this document.", true);
+                        return;
+                    }
+
+                    isManualSubmit = true;
+                    syncEditorToHiddenField();
+                    saveButton.disabled = true;
+                    savingLabel.classList.remove("d-none");
+                    logActivity("Manual save", "Save button pressed");
+                });
+            }
+
+            if (addCommentBubbleButton) {
+                addCommentBubbleButton.addEventListener("click", addCommentBubble);
+            }
+
+            commentBubbleLayer?.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const bubbleId = target.dataset.bubbleId;
+                if (!bubbleId) {
+                    return;
+                }
+
+                const bubble = commentBubbles.find((x) => x.id === bubbleId);
+                if (!bubble) {
+                    return;
+                }
+
+                quill.setSelection(bubble.index, 0, "api");
+                quill.focus();
+            });
+
+            commentBubbleList?.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) {
+                    return;
+                }
+
+                const action = target.getAttribute("data-action");
+                if (!action) {
+                    return;
+                }
+
+                const item = target.closest("li[data-bubble-id]");
+                if (!(item instanceof HTMLElement)) {
+                    return;
+                }
+
+                const bubbleId = item.getAttribute("data-bubble-id");
+                if (!bubbleId) {
+                    return;
+                }
+
+                const bubbleIndex = commentBubbles.findIndex((x) => x.id === bubbleId);
+                if (bubbleIndex < 0) {
+                    return;
+                }
+
+                if (action === "focus") {
+                    const bubble = commentBubbles[bubbleIndex];
+                    quill.setSelection(bubble.index, 0, "api");
+                    quill.focus();
+                    return;
+                }
+
+                if (action === "remove") {
+                    const removed = commentBubbles.splice(bubbleIndex, 1)[0];
+                    renderCommentBubbles();
+                    logActivity("Comment bubble", `Removed note #${removed.number}`);
+                }
+            });
+
+            window.addEventListener("beforeunload", () => {
+                if (connection && connection.state === "Connected") {
+                    connection.invoke("LeaveDocument", documentId).catch(() => {});
+                }
+            });
+
+            applyEditingState();
+            updateRevisionBadge();
+            updateWritingStats();
+            renderCommentBubbles();
+            if (accessStatusText && !canEditByRole) {
+                accessStatusText.textContent = "Read-only mode";
+            }
+            startRealtime();
+            setInterval(saveHtmlSnapshot, 2000);
+            setInterval(() => {
+                if (!canEditByRole) {
+                    requestMissingOperations();
+                }
+            }, 2000);
+        </script>
+    }
+}

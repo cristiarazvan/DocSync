@@ -1,0 +1,17 @@
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<div class="auth-cluster">
+@if (SignInManager.IsSignedIn(User))
+{
+    <span class="auth-chip">@UserManager.GetUserName(User)</span>
+    <form class="auth-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home")">
+        <button type="submit" class="btn app-btn app-btn-outline btn-sm">Logout</button>
+    </form>
+}
+else
+{
+    <a class="btn app-btn app-btn-outline btn-sm" asp-area="Identity" asp-page="/Account/Register">Register</a>
+    <a class="btn app-btn btn-sm" asp-area="Identity" asp-page="/Account/Login">Login</a>
+}
+</div>

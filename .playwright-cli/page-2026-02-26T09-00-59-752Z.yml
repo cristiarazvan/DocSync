@@ -1,0 +1,54 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "GoogDocsLite.Client" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - list [ref=e7]:
+          - listitem [ref=e8]:
+            - link "Register" [ref=e9] [cursor=pointer]:
+              - /url: /Identity/Account/Register
+          - listitem [ref=e10]:
+            - link "Login" [ref=e11] [cursor=pointer]:
+              - /url: /Identity/Account/Login
+  - main [ref=e13]:
+    - heading "Log in" [level=1] [ref=e14]
+    - generic [ref=e15]:
+      - generic [ref=e18]:
+        - heading "Use a local account to log in." [level=2] [ref=e19]
+        - separator [ref=e20]
+        - generic [ref=e21]:
+          - textbox "Email" [ref=e22]:
+            - /placeholder: name@example.com
+          - generic: Email
+        - generic [ref=e23]:
+          - textbox "Password" [ref=e24]:
+            - /placeholder: password
+          - generic: Password
+        - generic [ref=e26]:
+          - checkbox "Remember me?" [ref=e27]
+          - text: Remember me?
+        - button "Log in" [ref=e29] [cursor=pointer]
+        - generic [ref=e30]:
+          - paragraph [ref=e31]:
+            - link "Forgot your password?" [ref=e32] [cursor=pointer]:
+              - /url: /Identity/Account/ForgotPassword
+          - paragraph [ref=e33]:
+            - link "Register as a new user" [ref=e34] [cursor=pointer]:
+              - /url: /Identity/Account/Register?returnUrl=%2F
+          - paragraph [ref=e35]:
+            - link "Resend email confirmation" [ref=e36] [cursor=pointer]:
+              - /url: /Identity/Account/ResendEmailConfirmation
+      - generic [ref=e38]:
+        - heading "Use another service to log in." [level=3] [ref=e39]
+        - separator [ref=e40]
+        - paragraph [ref=e42]:
+          - text: There are no external authentication services configured. See this
+          - link "article about setting up this ASP.NET application to support logging in via external services" [ref=e43] [cursor=pointer]:
+            - /url: https://go.microsoft.com/fwlink/?LinkID=532715
+          - text: .
+  - contentinfo [ref=e44]:
+    - generic [ref=e45]:
+      - text: © 2026 - GoogDocsLite.Client -
+      - link "Privacy" [ref=e46] [cursor=pointer]:
+        - /url: /?page=%2FPrivacy

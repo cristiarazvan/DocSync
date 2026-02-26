@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e4]:
+        - link "GoogDocs Lite" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e6]:
+          - list [ref=e7]:
+            - listitem [ref=e8]:
+              - link "Home" [ref=e9] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e10]:
+              - link "Documents" [ref=e11] [cursor=pointer]:
+                - /url: /docs
+            - listitem [ref=e12]:
+              - link "Invites" [ref=e13] [cursor=pointer]:
+                - /url: /docs/invites
+          - list [ref=e14]:
+            - listitem [ref=e15]:
+              - generic [ref=e16]: Salut, owner.demo@googdocs.local
+            - listitem [ref=e17]:
+              - button "Logout" [ref=e19] [cursor=pointer]
+  - main [ref=e21]:
+    - heading "Dashboard" [level=1] [ref=e22]
+    - paragraph [ref=e23]: Welcome to Google Docs Lite (MVC). Open documents to create or edit your resume drafts.
+    - link "Go To Documents" [ref=e25] [cursor=pointer]:
+      - /url: /docs
+    - generic [ref=e27]:
+      - heading "Server Health" [level=5] [ref=e28]
+      - paragraph [ref=e29]:
+        - strong [ref=e30]: "Status:"
+        - text: ok
+      - paragraph [ref=e31]:
+        - strong [ref=e32]: "Server UTC:"
+        - text: 2026-02-26 09:01:28Z
+  - contentinfo [ref=e33]:
+    - generic [ref=e34]: © 2026 - GoogDocs Lite MVC
