@@ -1,230 +1,182 @@
-# GoogDocs Lite (.NET)
+# DocSync
 
-Google Docs Lite clone (Stage 0 + Stage 1 + Stage 2 + Stage 3 + Stage 4 + Stage 5 MVP) with:
-- `server`: ASP.NET Core Web API
-- `client`: ASP.NET Core MVC app (Razor Views)
-- `shared`: shared constants
-- SQLite + EF Core migrations
-- ASP.NET Core Identity (register/login/logout)
-- Quill rich-text editor + autosave
-- Sharing/invites (Viewer/Editor) + pending invite sync
-- SignalR live presence + single active editor lock
+DocSync is a collaborative document editor built with `.NET 9`, designed as a portfolio-ready full-stack project that demonstrates real-time collaboration, role-based access control, and service separation in an ASP.NET Core ecosystem.
 
-For a detailed learning path, see `GUIDE_WALKTHROUGH_RO.md`.
+The application combines an ASP.NET Core MVC client, a separate Web API for document operations, ASP.NET Core Identity for authentication, SignalR for live collaboration, and EF Core with SQLite for persistence.
 
-> Note: this repo currently targets `net9.0` because the installed SDK in this environment is .NET 9.  
-> If you have .NET 10 installed, switch `net9.0` to `net10.0` in project files and creation commands.
+## Overview
 
-## 1) Project structure
+This project was built to explore how a document editor can be structured beyond basic CRUD. It includes:
+
+- Rich-text document editing with Quill
+- Authentication and user management with ASP.NET Core Identity
+- Role-based sharing (`Owner`, `Editor`, `Viewer`)
+- Invite-based collaboration flows
+- Real-time presence and revision-aware collaboration
+- Single active-editor locking for coordinated editing
+- Dockerized local deployment
+
+## Architecture
+
+DocSync follows a Backend-for-Frontend style structure:
+
+- `client/GoogDocsLite.Client`
+  ASP.NET Core MVC application with Razor Views, Identity UI, SignalR hub, and typed HTTP clients for API communication
+- `server/GoogDocsLite.Server`
+  ASP.NET Core Web API responsible for document storage, sharing rules, realtime state, and edit-lock enforcement
+- `shared/GoogDocsLite.Shared`
+  Shared constants and cross-project primitives
+
+This separation keeps authentication concerns in the MVC application while the document API remains focused on document data, collaboration rules, and persistence.
+
+## Key Features
+
+- Secure registration, login, and logout with ASP.NET Core Identity
+- Document creation, listing, editing, renaming, and deletion
+- Rich-text editing with Quill
+- Manual save and autosave workflows
+- Email-based document sharing and invite acceptance/decline flows
+- Server-enforced access control for `Owner`, `Editor`, and `Viewer`
+- SignalR-based presence indicators for active collaborators
+- Active editor lock with acquire, heartbeat, and release flows
+- Revision-aware realtime synchronization with operation submission and replay
+- HTML snapshot synchronization for resync and recovery scenarios
+- SQLite persistence with EF Core migrations
+- Docker Compose setup for local multi-container execution
+
+## Tech Stack
+
+- `C#`
+- `.NET 9`
+- `ASP.NET Core MVC`
+- `ASP.NET Core Web API`
+- `ASP.NET Core Identity`
+- `SignalR`
+- `Entity Framework Core`
+- `SQLite`
+- `Quill.js`
+- `HtmlSanitizer`
+- `Docker` and `Docker Compose`
+
+## Project Structure
 
 ```txt
 GOOGDOCS/
-  server/GoogDocsLite.Server/
-    Application/Services/
-    Contracts/
-    Controllers/
-    Data/
   client/GoogDocsLite.Client/
-    Controllers/
-    Models/
-    Services/
-    Views/
+  server/GoogDocsLite.Server/
   shared/GoogDocsLite.Shared/
-  docker-compose.yml
   GoogDocsLite.sln
-  README.md
+  docker-compose.yml
 ```
 
-## 2) Exact scaffold commands (from empty folder)
+## Running Locally
 
-```bash
-mkdir -p server client shared
-dotnet new sln -n GoogDocsLite
+Requirements:
 
-dotnet new webapi -n GoogDocsLite.Server -o server/GoogDocsLite.Server --framework net9.0 --no-https
-dotnet new mvc -n GoogDocsLite.Client -o client/GoogDocsLite.Client --framework net9.0 --no-https
-dotnet new classlib -n GoogDocsLite.Shared -o shared/GoogDocsLite.Shared --framework net9.0
+- `.NET 9 SDK`
+- `Docker` (optional, only for containerized run)
 
-dotnet sln GoogDocsLite.sln add \
-  server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  client/GoogDocsLite.Client/GoogDocsLite.Client.csproj \
-  shared/GoogDocsLite.Shared/GoogDocsLite.Shared.csproj
+Start the API:
 
-dotnet add server/GoogDocsLite.Server/GoogDocsLite.Server.csproj reference shared/GoogDocsLite.Shared/GoogDocsLite.Shared.csproj
-dotnet add client/GoogDocsLite.Client/GoogDocsLite.Client.csproj reference shared/GoogDocsLite.Shared/GoogDocsLite.Shared.csproj
-
-dotnet add server/GoogDocsLite.Server/GoogDocsLite.Server.csproj package Microsoft.EntityFrameworkCore.Sqlite --version 9.0.8
-dotnet add server/GoogDocsLite.Server/GoogDocsLite.Server.csproj package Microsoft.EntityFrameworkCore.Design --version 9.0.8
-dotnet add server/GoogDocsLite.Server/GoogDocsLite.Server.csproj package HtmlSanitizer
-
-dotnet add client/GoogDocsLite.Client/GoogDocsLite.Client.csproj package Microsoft.EntityFrameworkCore.Sqlite --version 9.0.8
-dotnet add client/GoogDocsLite.Client/GoogDocsLite.Client.csproj package Microsoft.EntityFrameworkCore.Design --version 9.0.8
-dotnet add client/GoogDocsLite.Client/GoogDocsLite.Client.csproj package Microsoft.AspNetCore.Identity.EntityFrameworkCore --version 9.0.9
-dotnet add client/GoogDocsLite.Client/GoogDocsLite.Client.csproj package Microsoft.AspNetCore.Identity.UI --version 9.0.9
-
-dotnet new tool-manifest
-dotnet tool install dotnet-ef --version 9.0.8
-```
-
-## 3) EF migrations commands
-
-```bash
-dotnet tool run dotnet-ef migrations add InitialCreate \
-  --project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  --startup-project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  --output-dir Data/Migrations
-
-dotnet tool run dotnet-ef database update \
-  --project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  --startup-project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj
-
-dotnet tool run dotnet-ef migrations add Stage45SharingAndLocks \
-  --project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  --startup-project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  --output-dir Data/Migrations
-
-dotnet tool run dotnet-ef database update \
-  --project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj \
-  --startup-project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj
-
-dotnet tool run dotnet-ef migrations add InitialIdentity \
-  --project client/GoogDocsLite.Client/GoogDocsLite.Client.csproj \
-  --startup-project client/GoogDocsLite.Client/GoogDocsLite.Client.csproj \
-  --context AppIdentityDbContext \
-  --output-dir Data/Migrations/Identity
-
-dotnet tool run dotnet-ef database update \
-  --project client/GoogDocsLite.Client/GoogDocsLite.Client.csproj \
-  --startup-project client/GoogDocsLite.Client/GoogDocsLite.Client.csproj \
-  --context AppIdentityDbContext
-```
-
-## 4) Run locally (recommended first)
-
-Terminal 1 (API):
 ```bash
 dotnet run --project server/GoogDocsLite.Server/GoogDocsLite.Server.csproj --urls http://localhost:5175
 ```
 
-Terminal 2 (MVC client):
+Start the MVC client:
+
 ```bash
 dotnet run --project client/GoogDocsLite.Client/GoogDocsLite.Client.csproj --urls http://localhost:5169
 ```
 
-Open: `http://localhost:5169`
+Open:
 
-## 4.1) Demo seeded accounts (auto-created on startup)
+- Client: `http://localhost:5169`
+- API health check: `http://localhost:5175/api/health`
 
-`SeedDemoData` is enabled by default in both apps, so these users are created automatically:
-
-- `owner.demo@googdocs.local` / `demo123`
-- `editor.demo@googdocs.local` / `demo123`
-- `viewer.demo@googdocs.local` / `demo123`
-- `outsider.demo@googdocs.local` / `demo123`
-
-The API also seeds demo documents:
-- one private owner doc
-- one owner doc shared to editor
-- one owner doc shared to viewer
-- one owner doc with a pending invite (`pending.demo@googdocs.local`)
-
-## 5) Run with Docker (optional clean workflow)
+## Running with Docker
 
 ```bash
 docker compose up --build
 ```
 
 Open:
+
 - Client: `http://localhost:5169`
-- API: `http://localhost:5175/api/health`
+- API health check: `http://localhost:5175/api/health`
 
-Docker volumes persist:
-- documents DB (`server-data`)
-- identity DB (`client-data`)
+Persistent volumes:
 
-Stop:
+- `server-data` for document storage
+- `client-data` for identity storage
+
+Stop containers:
+
 ```bash
 docker compose down
 ```
 
-## 6) Features implemented (Stages 1, 2, 3, 4, 5 MVP)
+## Demo Accounts
 
-- Create document (title)
-- List documents
-- Open document
-- Edit title + rich text content (Quill)
-- Save (manual button)
-- Autosave every few seconds when content/title changes
-- Rename (edit title + save)
-- Delete
-- Save state indicator (`Saving...` / `Saved`)
-- Friendly errors in UI
-- Register/Login/Logout with ASP.NET Core Identity
-- Documents routes require authentication
-- Sharing by email (owner invites as `Viewer` or `Editor`)
-- Incoming invites inbox (accept/decline)
-- Pending invite sync by user email header
-- Access roles enforced server-side (`Owner` / `Editor` / `Viewer`)
-- Live presence in editor (SignalR)
-- Edit lock endpoints + UI (`Request edit access` / `Release edit access`)
-- `PUT` guarded by lock ownership (`423 Locked` if lock missing/owned by someone else)
-- MVC routing/pages:
-  - `/` dashboard
-  - `/docs` documents list
-  - `/docs/{id}` editor
-  - `/docs/invites` incoming invites
+Demo seeding is enabled by default. The following users are created automatically on startup:
 
-## 7) API endpoints
+- `owner.demo@googdocs.local` / `demo123`
+- `editor.demo@googdocs.local` / `demo123`
+- `viewer.demo@googdocs.local` / `demo123`
+- `outsider.demo@googdocs.local` / `demo123`
 
-- `GET /api/health`
+The API also seeds sample documents, including private, shared, and pending-invite scenarios.
+
+## Selected API Surface
+
+Document management:
+
 - `GET /api/documents?view=owned|shared|all`
 - `POST /api/documents`
 - `GET /api/documents/{id}`
 - `PUT /api/documents/{id}`
 - `DELETE /api/documents/{id}`
+
+Sharing and invites:
+
 - `GET /api/documents/{id}/shares`
 - `POST /api/documents/{id}/shares`
 - `DELETE /api/documents/{id}/shares/{permissionOrInviteId}`
 - `GET /api/invites/incoming`
 - `POST /api/invites/{inviteId}/accept`
 - `POST /api/invites/{inviteId}/decline`
-- `POST /api/invites/sync-pending`
+
+Realtime and locking:
+
 - `GET /api/documents/{id}/lock`
 - `POST /api/documents/{id}/lock/acquire`
 - `POST /api/documents/{id}/lock/heartbeat`
 - `POST /api/documents/{id}/lock/release`
+- `GET /api/documents/{id}/realtime/state`
+- `POST /api/documents/{id}/realtime/ops`
+- `GET /api/documents/{id}/realtime/ops`
+- `PUT /api/documents/{id}/realtime/html-snapshot`
 
-All document endpoints are scoped by user id header (`X-User-Id`) that MVC sends for the authenticated user.
-API also expects internal service header (`X-Internal-Api-Key`) to block direct public usage.
+## Security and Design Notes
 
-## 8) Manual test plan (Stage 4 + Stage 5 focus)
+- The MVC client forwards authenticated user context to the API
+- The API expects an internal service key header for protected internal access
+- Rich-text content is sanitized server-side before persistence
+- Authorization rules are enforced server-side rather than relying on UI checks alone
+- Document and identity data are stored in separate SQLite databases
 
-1. Open `http://localhost:5169`.
-2. Register `User A` and create a document.
-3. In editor as `User A`, request edit access and confirm you can type/save.
-4. Share document to `User B` email as `Editor`.
-5. Register/login as `User B` with same email, open `/docs/invites`, accept invite.
-6. Open `/docs?view=shared` as `User B`, open shared doc.
-7. Confirm `User B` cannot save until pressing `Request edit access`.
-8. Open same doc in `User A` and keep lock; confirm `User B` sees read-only + lock holder info.
-9. Release lock as `User A`; acquire lock as `User B`; confirm save/autosave works.
-10. With both tabs open, edit/save from lock owner and confirm remote tab updates content live.
-11. As `Viewer` (optional), confirm read works but save/share/delete/lock acquire are blocked.
-12. As owner, revoke share entry and confirm shared user loses access.
+## Why This Project Matters
 
-## 9) Troubleshooting
+This project demonstrates practical experience with:
 
-- If client cannot reach API:
-  - Confirm API is running on `http://localhost:5175`.
-  - Check `client/GoogDocsLite.Client/appsettings.Development.json` has `"ApiBaseUrl": "http://localhost:5175"`.
-- If database issues happen:
-  - Re-run both migration command groups (server docs DB + client identity DB).
-  - Delete `server/GoogDocsLite.Server/docs-lite.db` and run migration update again.
-  - Delete `client/GoogDocsLite.Client/identity.db` and run identity migration update again.
-- If `dotnet-ef` is missing:
-  - Run `dotnet tool restore`.
-- If Quill toolbar doesn’t load:
-  - Check internet access to jsdelivr CDN (Quill assets are loaded from CDN).
-- If realtime presence/lock events do not appear:
-  - Check browser console for SignalR connection errors to `/hubs/document-collab`.
-  - Confirm client app runs on `http://localhost:5169` and user is authenticated.
+- Full-stack ASP.NET Core application design
+- Realtime collaboration patterns with SignalR
+- Role-based authorization and invite workflows
+- EF Core data modeling and migrations
+- Multi-project solution design and service separation
+- Containerized local development workflows
+
+## Notes
+
+- The solution currently targets `net9.0`
+- Quill assets are loaded from `jsdelivr`, so internet access is required for the editor toolbar assets
+
