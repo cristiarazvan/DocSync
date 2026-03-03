@@ -7,8 +7,9 @@
 <div class="auth-page">
     <section class="auth-shell">
         <div class="auth-card">
-            <h1>Create your account</h1>
-            <p>Start a new workspace and collaborate in realtime.</p>
+            <div class="eyebrow">Create account</div>
+            <h1>Set up a calmer document workspace.</h1>
+            <p>Start with a clean collaboration shell, invite the right people, and keep shared drafts moving without chaos.</p>
 
             <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
                 <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
@@ -31,28 +32,29 @@
                     <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                 </div>
 
-                <button id="registerSubmit" type="submit" class="btn app-btn w-100">Register</button>
+                <button id="registerSubmit" type="submit" class="btn app-btn w-100">Create account</button>
             </form>
         </div>
 
         <aside class="auth-side">
-            <div>
-                <h2>What you get</h2>
-                <ul>
-                    <li>Shared document access with role controls.</li>
-                    <li>Realtime editor updates and presence tracking.</li>
-                    <li>Simple invite workflow for collaborators.</li>
+            <div class="auth-side-panel">
+                <div class="eyebrow">What you unlock</div>
+                <h2>A single environment for drafting, sharing, and live revision.</h2>
+                <ul class="auth-feature-list">
+                    <li>Role-based document access for owners, editors, and viewers.</li>
+                    <li>Invite-driven collaboration that stays separate from your active workspace.</li>
+                    <li>Realtime presence, autosave, and revision-aware editing.</li>
                 </ul>
             </div>
 
             @if ((Model.ExternalLogins?.Count ?? 0) == 0)
             {
-                <p>No external authentication providers are configured.</p>
+                <p class="auth-note">No external authentication providers are configured.</p>
             }
             else
             {
-                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
-                    <p class="mb-1">Register with:</p>
+                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form auth-external">
+                    <p class="mb-1">Register with another provider</p>
                     @foreach (var provider in Model.ExternalLogins!)
                     {
                         <button type="submit" class="btn app-btn app-btn-outline" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>

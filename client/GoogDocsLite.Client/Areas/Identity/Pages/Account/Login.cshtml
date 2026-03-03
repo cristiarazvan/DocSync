@@ -7,8 +7,9 @@
 <div class="auth-page">
     <section class="auth-shell">
         <div class="auth-card">
-            <h1>Welcome back</h1>
-            <p>Sign in to continue editing and collaborating on your documents.</p>
+            <div class="eyebrow">Sign in</div>
+            <h1>Try DocSync or return to your workspace.</h1>
+            <p>Use your own account or one of the seeded roles below to test sharing, invites, and permissions.</p>
 
             <form id="account" method="post" class="auth-form">
                 <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
@@ -40,20 +41,36 @@
             </form>
         </div>
 
-        <aside class="auth-side">
-            <div>
-                <h2>Secure access</h2>
-                <p>Use your account to manage documents, invites, and realtime collaboration.</p>
+        <aside class="auth-side auth-side-compact">
+            <div class="auth-side-panel">
+                <div class="eyebrow">Demo access</div>
+                <h2>Seeded roles ready to use.</h2>
+                <p>All demo accounts use password <strong>demo123</strong>. Use quick fill to test the app faster.</p>
             </div>
 
-            @if ((Model.ExternalLogins?.Count ?? 0) == 0)
+            <div class="demo-account-list">
+                <button type="button" class="demo-account-card" data-demo-email="owner.demo@googdocs.local" data-demo-password="demo123">
+                    <small>Owner</small>
+                    <strong>owner.demo@googdocs.local</strong>
+                </button>
+                <button type="button" class="demo-account-card" data-demo-email="editor.demo@googdocs.local" data-demo-password="demo123">
+                    <small>Editor</small>
+                    <strong>editor.demo@googdocs.local</strong>
+                </button>
+                <button type="button" class="demo-account-card" data-demo-email="viewer.demo@googdocs.local" data-demo-password="demo123">
+                    <small>Viewer</small>
+                    <strong>viewer.demo@googdocs.local</strong>
+                </button>
+                <button type="button" class="demo-account-card" data-demo-email="outsider.demo@googdocs.local" data-demo-password="demo123">
+                    <small>Outsider</small>
+                    <strong>outsider.demo@googdocs.local</strong>
+                </button>
+            </div>
+
+            @if ((Model.ExternalLogins?.Count ?? 0) > 0)
             {
-                <p>No external authentication providers are configured.</p>
-            }
-            else
-            {
-                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
-                    <p class="mb-1">Sign in with:</p>
+                <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form auth-external">
+                    <p class="mb-1">Use another provider</p>
                     @foreach (var provider in Model.ExternalLogins!)
                     {
                         <button type="submit" class="btn app-btn app-btn-outline" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
@@ -66,4 +83,27 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const emailInput = document.getElementById("Input_Email");
+            const passwordInput = document.getElementById("Input_Password");
+            const rememberMeInput = document.getElementById("Input_RememberMe");
+
+            document.querySelectorAll("[data-demo-email]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    if (emailInput) {
+                        emailInput.value = button.getAttribute("data-demo-email") || "";
+                    }
+
+                    if (passwordInput) {
+                        passwordInput.value = button.getAttribute("data-demo-password") || "";
+                    }
+
+                    if (rememberMeInput instanceof HTMLInputElement) {
+                        rememberMeInput.checked = true;
+                    }
+                });
+            });
+        })();
+    </script>
 }

@@ -3,35 +3,39 @@
     ViewData["Title"] = "Invites";
 }
 
-<section class="page-header">
+<section class="workspace-hero">
     <div>
+        <div class="eyebrow">Inbox</div>
         <h1 class="page-title">Invites</h1>
-        <p class="page-subtitle">Review incoming collaboration requests and decide what enters your workspace.</p>
+        <p class="page-subtitle">Accept or decline collaboration requests.</p>
     </div>
     <div class="page-actions">
-        <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Index">Back to Documents</a>
+        <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Index">Back to documents</a>
     </div>
 </section>
 
-@if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
-{
-    <div class="app-alert app-alert-success">
-        <span>@Model.InfoMessage</span>
-    </div>
-}
+<div class="message-stack">
+    @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+    {
+        <div class="app-alert app-alert-success">
+            <span>@Model.InfoMessage</span>
+        </div>
+    }
 
-@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-{
-    <div class="app-alert app-alert-danger">
-        <span>@Model.ErrorMessage</span>
-    </div>
-}
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="app-alert app-alert-danger">
+            <span>@Model.ErrorMessage</span>
+        </div>
+    }
+</div>
 
 @if (Model.Invites.Count == 0)
 {
-    <div class="empty-state">
-        <h5 class="mb-1">Inbox is clear</h5>
-        <p class="mb-0">No pending invites right now.</p>
+    <div class="empty-state empty-state-large">
+        <div class="eyebrow">Inbox clear</div>
+        <h2>No pending invites right now.</h2>
+        <p>Your collaboration queue is empty. New incoming requests will appear here.</p>
     </div>
 }
 else
@@ -42,17 +46,34 @@ else
             var roleClass = invite.Role == "Editor" ? "role-editor" : "role-viewer";
 
             <article class="invite-card">
-                <div class="d-flex justify-content-between gap-2 align-items-start">
-                    <h5>@invite.DocumentTitle</h5>
+                <div class="doc-card-top">
+                    <div>
+                        <div class="card-kicker">Access request</div>
+                        <h2>@invite.DocumentTitle</h2>
+                    </div>
                     <span class="role-pill @roleClass">@invite.Role</span>
                 </div>
 
-                <div class="invite-meta">
-                    <div>From: @invite.CreatedByUserId</div>
-                    <div>Expires: @invite.ExpiresAtUtc.ToLocalTime().ToString("g")</div>
+                <div class="doc-card-meta-grid">
+                    <div>
+                        <small>Shared by</small>
+                        <strong>@invite.CreatedByUserId</strong>
+                    </div>
+                    <div>
+                        <small>Created</small>
+                        <strong>@invite.CreatedAtUtc.ToLocalTime().ToString("g")</strong>
+                    </div>
+                    <div>
+                        <small>Expires</small>
+                        <strong>@invite.ExpiresAtUtc.ToLocalTime().ToString("g")</strong>
+                    </div>
+                    <div>
+                        <small>Status</small>
+                        <strong>@invite.Status</strong>
+                    </div>
                 </div>
 
-                <div class="doc-card-actions justify-content-start">
+                <div class="doc-card-actions doc-card-actions-start">
                     <form method="post" asp-controller="Documents" asp-action="AcceptInvite" asp-route-inviteId="@invite.InviteId">
                         <button type="submit" class="btn app-btn btn-sm">Accept</button>
                     </form>

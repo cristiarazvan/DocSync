@@ -6,90 +6,79 @@
 
 @if (!isSignedIn)
 {
-    <section class="landing-hero">
-        <div class="landing-grid">
-            <div class="landing-copy">
-                <h1>Write, collaborate, and ship polished documents faster.</h1>
-                <p>
-                    GoogDocs Lite is a realtime writing workspace built for clear drafting, sharing, and iteration.
-                    Start with a clean canvas, invite collaborators, and keep every revision in sync.
+    <section class="hero-frame">
+        <div class="hero-grid hero-grid-minimal">
+            <div class="hero-copy">
+                <div class="eyebrow">Collaborative editor</div>
+                <h1 class="hero-title">Write together in a cleaner workspace.</h1>
+                <p class="hero-lead">
+                    DocSync keeps documents, invites, and live editing in one place without piling extra UI around the work.
                 </p>
-                <div class="landing-cta">
-                    <a class="btn app-btn" asp-area="Identity" asp-page="/Account/Register">Create Account</a>
-                    <a class="btn app-btn app-btn-outline" asp-area="Identity" asp-page="/Account/Login">Sign In</a>
+
+                <div class="hero-actions">
+                    <a class="btn app-btn" asp-area="Identity" asp-page="/Account/Login">Try the app</a>
+                    <a class="btn app-btn app-btn-outline" asp-area="Identity" asp-page="/Account/Register">Create account</a>
+                </div>
+
+                <div class="hero-inline-notes">
+                    <span class="mini-note">Realtime editing</span>
+                    <span class="mini-note">Owner / Editor / Viewer roles</span>
+                    <span class="mini-note">Invites and sharing</span>
                 </div>
             </div>
 
-            <div class="surface-stack">
-                <article class="feature-card">
-                    <small>Realtime Engine</small>
-                    <strong>Live editing</strong>
-                </article>
-                <article class="feature-card">
-                    <small>Sharing Model</small>
-                    <strong>Owner / Editor / Viewer</strong>
-                </article>
-                <article class="feature-card">
-                    <small>Editor Core</small>
-                    <strong>Quill + SignalR</strong>
-                </article>
+            <div class="hero-visual hero-visual-minimal" aria-hidden="true">
+                <div class="doc-mockup-stack doc-mockup-stack-minimal">
+                    <div class="doc-mockup doc-mockup-left"></div>
+                    <div class="doc-mockup doc-mockup-center">
+                        <span class="doc-mockup-tag">DocSync</span>
+                        <div class="doc-mockup-lines">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
+
+    <section class="minimal-feature-strip">
+        <article class="metric-card">
+            <small>Roles</small>
+            <strong>Owner, editor, viewer</strong>
+        </article>
+        <article class="metric-card">
+            <small>Demo access</small>
+            <strong>Seeded demo accounts ready</strong>
+        </article>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="app-alert app-alert-danger">
+            <span>@Model.ErrorMessage</span>
+        </div>
+    }
 }
 else
 {
-    <section class="landing-hero">
-        <div class="page-header mb-0">
-            <div>
-                <h1 class="page-title">Welcome back</h1>
-                <p class="page-subtitle">Open your workspace, continue recent drafts, or review pending collaboration invites.</p>
-            </div>
-            <div class="page-actions">
-                <a class="btn app-btn" asp-controller="Documents" asp-action="Index">Open Documents</a>
-                <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Invites">Review Invites</a>
-            </div>
+    <section class="dashboard-hero dashboard-hero-minimal">
+        <div class="dashboard-hero-copy">
+            <div class="eyebrow">Workspace</div>
+            <h1 class="hero-title">Welcome back to DocSync.</h1>
+            <p class="hero-lead">Open your documents or review invites. The rest stays out of the way.</p>
+        </div>
+        <div class="page-actions">
+            <a class="btn app-btn" asp-controller="Documents" asp-action="Index">Open documents</a>
+            <a class="btn app-btn app-btn-outline" asp-controller="Documents" asp-action="Invites">Review invites</a>
         </div>
     </section>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="app-alert app-alert-danger">
+            <span>@Model.ErrorMessage</span>
+        </div>
+    }
 }
-
-<section class="home-feature-grid mb-3">
-    <article class="feature-card">
-        <small>Platform</small>
-        <strong>GoogDocs Lite MVC</strong>
-    </article>
-    <article class="feature-card">
-        <small>Collaboration</small>
-        <strong>SignalR Presence</strong>
-    </article>
-    <article class="feature-card">
-        <small>Document Sync</small>
-        <strong>@(Model.ServerStatus ?? "Unknown")</strong>
-    </article>
-</section>
-
-<section class="surface-card status-card">
-    <div class="surface-card-body">
-        <h5 class="mb-3">System Health</h5>
-
-        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-        {
-            <div class="app-alert app-alert-danger mb-0">
-                <span>@Model.ErrorMessage</span>
-            </div>
-        }
-        else
-        {
-            <div class="status-grid">
-                <div>
-                    <small class="text-muted d-block text-uppercase">Status</small>
-                    <strong>@(Model.ServerStatus ?? "Unknown")</strong>
-                </div>
-                <div>
-                    <small class="text-muted d-block text-uppercase">Server UTC Time</small>
-                    <strong>@Model.ServerUtcTime?.ToString("u")</strong>
-                </div>
-            </div>
-        }
-    </div>
-</section>

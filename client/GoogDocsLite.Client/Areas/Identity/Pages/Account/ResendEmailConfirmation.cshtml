@@ -7,8 +7,9 @@
 <div class="auth-page">
     <section class="auth-shell">
         <div class="auth-card">
-            <h1>Resend confirmation</h1>
-            <p>Enter your email and we will send another confirmation link.</p>
+            <div class="eyebrow">Verification</div>
+            <h1>Resend confirmation email.</h1>
+            <p>Enter your email address and the system will send a new confirmation link.</p>
 
             <form method="post" class="auth-form">
                 <div asp-validation-summary="All" class="text-danger" role="alert"></div>
@@ -28,9 +29,10 @@
         </div>
 
         <aside class="auth-side">
-            <div>
-                <h2>Email verification</h2>
-                <p>Confirming your email helps protect your account.</p>
+            <div class="auth-side-panel">
+                <div class="eyebrow">Protected access</div>
+                <h2>Verification keeps account identity aligned with the workspace.</h2>
+                <p>Confirm the address attached to your collaboration context before returning to editing.</p>
             </div>
         </aside>
     </section>

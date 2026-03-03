@@ -1,6 +1,33 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<section class="section-frame policy-shell">
+    <div class="section-heading">
+        <div>
+            <div class="eyebrow">Privacy</div>
+            <h1 class="page-title">Privacy for a collaboration-first workspace.</h1>
+        </div>
+        <p class="section-copy">
+            This project separates authentication, document storage, and collaboration services so account access and document state remain explicit.
+        </p>
+    </div>
+
+    <div class="policy-grid">
+        <article class="editorial-card">
+            <div class="card-kicker">Identity</div>
+            <h2>Accounts are handled through ASP.NET Core Identity.</h2>
+            <p>Authentication state is managed in the MVC client and tied to your collaboration context.</p>
+        </article>
+        <article class="editorial-card">
+            <div class="card-kicker">Documents</div>
+            <h2>Shared content follows role-based access rules.</h2>
+            <p>Owners, editors, and viewers receive different levels of access across document workflows and invite states.</p>
+        </article>
+        <article class="editorial-card">
+            <div class="card-kicker">Realtime</div>
+            <h2>Presence and sync are scoped to active documents.</h2>
+            <p>Collaboration updates are delivered through SignalR and revision-aware APIs rather than broad client trust.</p>
+        </article>
+    </div>
+</section>

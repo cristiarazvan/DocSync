@@ -22,7 +22,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - GoogDocs Lite</title>
+    <title>@ViewData["Title"] - DocSync</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -31,18 +31,27 @@
 </head>
 <body>
     <div class="site-shell">
+        <div class="site-backdrop" aria-hidden="true">
+            <div class="site-backdrop-grid"></div>
+            <div class="site-backdrop-glow site-backdrop-glow-left"></div>
+            <div class="site-backdrop-glow site-backdrop-glow-right"></div>
+        </div>
+
         <header class="site-header">
             <div class="site-header-inner">
                 <a class="site-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <span class="site-brand-mark" aria-hidden="true">GD</span>
+                    <span class="site-brand-mark" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                    </span>
                     <span class="site-brand-copy">
-                        <strong>GoogDocs Lite</strong>
-                        <small>Collaborative writing workspace</small>
+                        <strong>DocSync</strong>
+                        <small>Structured collaboration for living documents</small>
                     </span>
                 </a>
 
                 <button id="mobileNavToggle" class="site-mobile-toggle" type="button" aria-controls="primaryNav" aria-expanded="false">
-                    Menu
+                    Navigation
                 </button>
 
                 <nav id="primaryNav" class="site-nav" aria-label="Primary">
@@ -68,8 +77,10 @@
         </main>
 
         <footer class="site-footer">
-            <span>GoogDocs Lite MVC</span>
-            <span>Realtime docs collaboration demo</span>
+            <div class="site-footer-meta">
+                <span>DocSync</span>
+                <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            </div>
         </footer>
     </div>
 
